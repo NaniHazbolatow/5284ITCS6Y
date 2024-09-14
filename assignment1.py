@@ -16,13 +16,16 @@ def RK4(f, current_state: tuple, step_size: float = 0.01) -> float:
         float : Updated value of the differential equation.
     """
     k1 = step_size * f(*current_state)
+
     k2 = step_size * f(
         *[current_state[i] + k1 * 0.5 for i in range(len(current_state))]
     )
     k3 = step_size * f(
         *[current_state[i] + k2 * 0.5 for i in range(len(current_state))]
     )
-    k4 = step_size * f(*[current_state[i] + k3 for i in range(len(current_state))])
+    k4 = step_size * f(
+        *[current_state[i] + k3 for i in range(len(current_state))]
+    )
 
     return (k1 + 2 * k2 + 2 * k3 + k4) / 6
 
@@ -103,7 +106,7 @@ class demographySIR(baseSIR):
         Differential equation for infected population including demography.
         """
         return self.beta * S * I - I * (self.gamma - self.birth_rate)
-
+    
 
 class mortalitySIR(demographySIR, baseSIR):
     def __init__(
@@ -127,10 +130,10 @@ class mortalitySIR(demographySIR, baseSIR):
         """
         Differential equation for infected population including demography.
         """
-        return self.beta * S * I - I * ((self.gamma + self.birth_rate)  + I * (1 - self.mortality_probability))
+        return self.beta * S * I - I * ((self.gamma - self.birth_rate)  + I * (1 - self.mortality_probability))
     
-    def dRdt(self, I):
-        return self.gamma * I
+    def dRdt(self, I, R):
+        return self.gamma * I - self.birth_rate * R
     
     def update_step(self, dt=0.01):
         """
@@ -138,11 +141,11 @@ class mortalitySIR(demographySIR, baseSIR):
         """
         self.S += RK4(self.dSdt, (self.S, self.I), step_size=dt)
         self.I += RK4(self.dIdt, (self.S, self.I), step_size=dt)
-        self.R += RK4(self.dRdt, (self.I,), step_size=dt)
+        self.R += RK4(self.dRdt, (self.I, self.R), step_size=dt)
 
 
-sir_model = mortalitySIR(beta=3, gamma=1, birth_rate=0.01, mortality_probability = 0.45, I0=0.3)
-data = sir_model.numerical_integration(t=5, dt=0.01)
+sir_model = mortalitySIR(beta=3, gamma=1, birth_rate=0.02, mortality_probability = 0.3, I0=0.01)
+data = sir_model.numerical_integration(t=20, dt=0.01)
 plt.plot(data[:, 0], data[:, 1], label="Susceptible")
 plt.plot(data[:, 0], data[:, 2], label="Infected")
 plt.plot(data[:, 0], data[:, 3], label="Recovered")
