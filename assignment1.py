@@ -205,6 +205,40 @@ class thresholdVaccinationSIR(baseSIR):
 # TO-DO: Write Solver
 
 
+def RSME(estimated_data, observed_data):
+    return np.sqrt(np.mean((observed_data - estimated_data) ** 2))
+
+class solverSIR:
+    def __init__(self, SIR, initSIR, loss, suspectibleObserved)
+        self.model = SIR(*initSIR)
+        self.loss = loss
+        self.obsS = suspectibleObserved
+
+    def computeGrad(self):
+        t = np.arange(0, len(self.obsS) + 1)
+
+        fitted_data = self.model.numerical_integration(t[-1])
+
+        fitS = fitted_data[np.isin(fitted_data[:, 0], t), 1]
+        
+        loss_ = self.loss(fitS, self.obsS) 
+
+        return fitS
+
+
+school_data = np.array([1, 3, 8, 28, 75, 221, 291, 255,
+                  235, 190, 125, 70, 28, 12, 5]) / 763 
+solver = solverSIR(baseSIR, [3, 1, 0.01], RSME, school_data)
+print(solver.computeGrad())
+
+
+
+
+
+
+
+
+
 
 
 
