@@ -201,57 +201,107 @@ class thresholdVaccinationSIR(baseSIR):
         
         return -self.beta * S * I - vaccination
 
-
-# TO-DO: Write Solver
-
-
-def RSME(estimated_data, observed_data):
-    return np.sqrt(np.mean((observed_data - estimated_data) ** 2))
+def MSE(estimated_data, observed_data):
+    return np.mean((observed_data - estimated_data) ** 2)
 
 class solverSIR:
-    def __init__(self, SIR, initSIR, loss, suspectibleObserved)
-        self.model = SIR(*initSIR)
-        self.loss = loss
-        self.obsS = suspectibleObserved
+    def __init__(self, SIR, loss_fn, init_params, **kwargs):
+        self.classSIR = SIR
+        self.loss_fn = loss_fn
+        self.params = np.array(init_params)
+        self.kwargs = kwargs
 
-    def computeGrad(self):
-        t = np.arange(0, len(self.obsS) + 1)
+    def computeLoss(self, params, obsS):
+        time = len(obsS) 
 
-        fitted_data = self.model.numerical_integration(t[-1])
+        model_t = self.classSIR(*params, **self.kwargs).numerical_integration(time-1)
 
-        fitS = fitted_data[np.isin(fitted_data[:, 0], t), 1]
+        fitS_t = model_t[np.isin(model_t[:, 0], np.arange(0, time+1)), 2]
+
+        loss_t = self.loss_fn(obsS, fitS_t)
+        return loss_t
+
+    def computeGrad(self, obsS, params, epsilon=1e-6):
+        grad = np.zeros_like(params)
+
+        loss_t = self.computeLoss(params, obsS)
+
+        for i, _ in enumerate(params):
+            params[i] += epsilon
+
+            loss_dt = self.computeLoss(params, obsS)
+
+            grad[i] = (loss_dt - loss_t) / epsilon
+
+            params[i] -= epsilon  # Restore the original parameter
+
+        return grad
+    
+    def optimize(self, obsS, learning_rate=0.01, max_iterations=1000, epsilon=1e-8):
+        params = np.array(self.params, dtype = float) 
         
-        loss_ = self.loss(fitS, self.obsS) 
+        lowest_loss = float('inf')
+        best_params = params.copy()
 
-        return fitS
+        # Implement Adagrad
+        accumulated_grad_squares = np.zeros_like(params)
+
+        for iteration in range(max_iterations):
+            grad = self.computeGrad(obsS, params)
+            
+            params -= learning_rate * grad
+
+        
+            accumulated_grad_squares += grad ** 2
+            
+            adjusted_grad = grad / (np.sqrt(accumulated_grad_squares) + epsilon)
+            params -= learning_rate * adjusted_grad
+
+            current_loss = self.computeLoss(params, obsS)
+
+            # Update previous loss
+            prev_loss = current_loss
+
+       
+            if current_loss < lowest_loss:
+                lowest_loss = current_loss
+                best_params = params.copy()
+
+
+            if iteration % 100 == 0:
+                print(f'Iteration {iteration}: Loss = {current_loss}, Parameters = {params}')
+
+        
+        return params, current_loss
+    
+
+    def plot_fitvsobs(self, obsS):
+        time = len(obsS)
+
+        # Create an instance of the model with the final optimized parameters
+        model_instance = self.classSIR(*self.params, **self.kwargs)
+        model_t = model_instance.numerical_integration(time-1)
+
+        # Plot observed vs fitted values
+        plt.figure(figsize=(10, 6))
+        plt.plot(np.arange(0, time), obsS, 'o', label='Observed Infected')
+        plt.plot(model_t[:,0], model_t[:,2], '-', label='Fitted Infected')
+        plt.xlabel('Time')
+        plt.ylabel('Infected Population')
+        plt.title('Fitted vs Observed Susceptible Population')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+
+
 
 
 school_data = np.array([1, 3, 8, 28, 75, 221, 291, 255,
                   235, 190, 125, 70, 28, 12, 5]) / 763 
-solver = solverSIR(baseSIR, [3, 1, 0.01], RSME, school_data)
-print(solver.computeGrad())
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-sir_model = thresholdVaccinationSIR(beta = 1/3, gamma = 1/6, I0 = 0.01, vaccination_rate = 0.01)
-data = sir_model.numerical_integration(t=300, dt=0.01)
-plt.plot(data[:, 0], data[:, 1], label="Susceptible")
-plt.plot(data[:, 0], data[:, 2], label="Infected")
-plt.plot(data[:, 0], data[:, 3], label="Recovered")
-plt.legend()
-plt.show()
+solver = solverSIR(baseSIR, MSE, [1.66523459, 0.44993837], I0 = 1/763)
+solver.optimize(school_data, learning_rate=0.01, max_iterations=1000)
+solver.plot_fitvsobs(school_data)
 
 
 
