@@ -299,17 +299,9 @@ class solverSIR:
 
 school_data = np.array([1, 3, 8, 28, 75, 221, 291, 255,
                   235, 190, 125, 70, 28, 12, 5]) / 763 
-solver = solverSIR(baseSIR, MSE, [1.66523459, 0.44993837], I0 = 1/763)
-solver.optimize(school_data, learning_rate=0.01, max_iterations=1000)
-solver.plot_fitvsobs(school_data)
-
-
-school_data = np.array([1, 3, 8, 28, 75, 221, 291, 255,
-                  235, 190, 125, 70, 28, 12, 5]) / 763 
-solver = solverSIR(demographySIR, MSE, [1.66523459, 0.44993837], I0 = 1/763, birth_rate = 0.01)
-solver.optimize(school_data, learning_rate=0.01, max_iterations=1000)
-solver.plot_fitvsobs(school_data)
-
+#solver = solverSIR(baseSIR, MSE, [1.66523459, 0.44993837], I0 = 1/763)
+#solver.optimize(school_data, learning_rate=0.01, max_iterations=1000)
+#solver.plot_fitvsobs(school_data)
 
 
 
@@ -329,7 +321,7 @@ def plot_single_phase_diagram(
     # Loop through the different I0 values for the same beta, gamma pair
     for I0 in I0_values:
         model_instance = model_class(beta=beta, gamma=gamma, I0=I0, **model_kwargs)
-        data = model_instance.numerical_integration(t=120, dt=0.01)
+        data = model_instance.numerical_integration(t=300, dt=0.01)
         plt.plot(
             data[:, 1], data[:, 2], color="lightblue", linewidth=1.5, alpha=0.7
         )  # Use light blue for all lines
@@ -409,15 +401,15 @@ def plot_all_phase_diagrams(model_class, **model_kwargs):
 # Call the function to generate the plots
 plot_single_phase_diagram(
     demographySIR,
-    beta=1 / 6,
+    beta=1.5,
     gamma=1 / 3,
     I0_values=np.linspace(0.05, 1, 10),
     birth_rate=0.02,
 )
 
 
-sir_model = demographySIR(beta=1 / 6, gamma=1 / 3, birth_rate=1 / 60, I0=0.01)
-data = sir_model.numerical_integration(t=300, dt=0.01)
+sir_model = thresholdVaccinationSIR(beta=1.65, gamma=0.44, I0=0.01, vaccination_rate= 0.15)
+data = sir_model.numerical_integration(t=15, dt=0.001)
 plt.plot(data[:, 0], data[:, 1], label="Susceptible")
 plt.plot(data[:, 0], data[:, 2], label="Infected")
 plt.plot(data[:, 0], data[:, 3], label="Recovered")
