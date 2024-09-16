@@ -269,7 +269,7 @@ class solverSIR:
 
 
             if iteration % 100 == 0:
-                print(f'Iteration {iteration}: Loss = {current_loss}, Parameters = {params}')
+                print(f'Iteration {iteration}: Lowest Loss = {lowest_loss}, Best Parameters = {best_params}')
 
         
         return params, current_loss
@@ -303,6 +303,12 @@ solver = solverSIR(baseSIR, MSE, [1.66523459, 0.44993837], I0 = 1/763)
 solver.optimize(school_data, learning_rate=0.01, max_iterations=1000)
 solver.plot_fitvsobs(school_data)
 
+
+school_data = np.array([1, 3, 8, 28, 75, 221, 291, 255,
+                  235, 190, 125, 70, 28, 12, 5]) / 763 
+solver = solverSIR(demographySIR, MSE, [1.66523459, 0.44993837], I0 = 1/763, birth_rate = 0.01)
+solver.optimize(school_data, learning_rate=0.01, max_iterations=1000)
+solver.plot_fitvsobs(school_data)
 
 
 
