@@ -399,12 +399,8 @@ def plot_all_phase_diagrams(model_class, **model_kwargs):
 
 
 # Call the function to generate the plots
-plot_single_phase_diagram(
-    demographySIR,
-    beta=1.5,
-    gamma=1 / 3,
-    I0_values=np.linspace(0.05, 1, 10),
-    birth_rate=0.02,
+plot_all_phase_diagrams(
+   baseSIR
 )
 
 
