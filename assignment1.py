@@ -411,3 +411,6 @@ plt.plot(data[:, 0], data[:, 2], label="Infected")
 plt.plot(data[:, 0], data[:, 3], label="Recovered")
 plt.legend()
 plt.show()
+
+
+demographySIR(3, 1, 0.05, 0.1)
